@@ -13,6 +13,52 @@
     <!--[if lte IE 9]>
         <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience and security.</p>
     <![endif]-->
-    <p>Hello world!</p>
+    <svg preserveAspectRatio="none" id="audio-visualizer" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+      <defs>
+        <mask id="topRightMask">
+          <g id="topRightMaskGroup"></g>
+        </mask>
+        <mask id="bottomRightMask">
+          <g id="bottomRightMaskGroup"></g>
+        </mask>
+        <mask id="topLeftMask">
+          <g id="topLeftMaskGroup"></g>
+        </mask>
+        <mask id="bottomLeftMask">
+          <g id="bottomLeftMaskGroup"></g>
+        </mask>
+        <linearGradient
+          id="gradient"
+          x1="100%"
+          y1="0%"
+          x2="0%"
+          y2="0%"
+          spreadMethod="repeat"
+        >
+          <stop offset="0%" style="stop-color:#FF0000;stop-opacity:1">
+            <animate attributeName="stop-color" values="#FF0000; #CBFF00; #00FF66; #0066FF; #CB00FF; #FF0000" dur="3s" repeatCount="indefinite"></animate>
+          </stop>
+          <stop offset="20%" style="stop-color:#CBFF00;stop-opacity:1">
+            <animate attributeName="stop-color" values="#CBFF00; #00FF66; #0066FF; #CB00FF; #FF0000; #CBFF00" dur="3s" repeatCount="indefinite"></animate>
+          </stop>
+          <stop offset="40%" style="stop-color:#00FF66;stop-opacity:1">
+            <animate attributeName="stop-color" values="#00FF66; #0066FF; #CB00FF; #FF0000; #CBFF00; #00FF66" dur="3s" repeatCount="indefinite"></animate>
+          </stop>
+          <stop offset="60%" style="stop-color:#0066FF;stop-opacity:1">
+            <animate attributeName="stop-color" values="#0066FF; #CB00FF; #FF0000; #CBFF00; #00FF66; #0066FF;" dur="3s" repeatCount="indefinite"></animate>
+          </stop>
+          <stop offset="80%" style="stop-color:#CB00FF;stop-opacity:1">
+            <animate attributeName="stop-color" values="#CB00FF; #FF0000; #CBFF00; #00FF66; #0066FF; #CB00FF" dur="3s" repeatCount="indefinite"></animate>
+          </stop>
+          <stop offset="100%" style="stop-color:#FF0000;stop-opacity:1">
+            <animate attributeName="stop-color" values="#FF0000; #CBFF00; #00FF66; #0066FF; #CB00FF; #FF0000" dur="3s" repeatCount="indefinite"></animate>
+          </stop>
+        </linearGradient>
+      </defs>
+      <rect x="0" y="0" width="100%" height="100%" fill="url(#gradient)" mask="url(#topRightMask)"></rect>
+      <rect x="0" y="0" width="100%" height="100%" fill="url(#gradient)" mask="url(#bottomRightMask)"></rect>
+      <rect x="0" y="0" width="100%" height="100%" fill="url(#gradient)" mask="url(#topLeftMask)"></rect>
+      <rect x="0" y="0" width="100%" height="100%" fill="url(#gradient)" mask="url(#bottomLeftMask)"></rect>
+    </svg>
   </body>
 </html>
