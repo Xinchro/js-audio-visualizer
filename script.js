@@ -12,105 +12,121 @@ let bottomLeftPaths = bottomLeftMask.getElementsByTagName('path')
 
 let AudioContext
 let audioContent
-let path
+
+let audioStream
+let analyser
+let fftSize
+
+let frequencyArray
+
+let widthResolution
+let height
+
+let bufferLength
+frequencyArray
+
+let pixelHeight
+let pixelGap
+let strokeWidth
 
 function startStream(stream) {
-  let audioStream = audioContent.createMediaStreamSource( stream )
-  let analyser = audioContent.createAnalyser()
-  let fftSize = 256
+  audioStream = audioContent.createMediaStreamSource( stream )
+  analyser = audioContent.createAnalyser()
+  fftSize = 256
 
   analyser.fftSize = fftSize // range (guessing) from 0dB to X
   audioStream.connect(analyser)
 
   // if(widthResolution <= fftSize) { fits() }
   // at 128, performance matches native browser
-  let widthResolution = 256
-  let height = 512 // 512 because frequencies cap at 255, so 2 bars make ~512(actual 510)
+  widthResolution = 256
+  height = 512 // 512 because frequencies cap at 255, so 2 bars make ~512(actual 510)
 
-  let bufferLength = analyser.frequencyBinCount
-  let frequencyArray = new Uint8Array(bufferLength)
+  bufferLength = analyser.frequencyBinCount
+  frequencyArray = new Uint8Array(bufferLength)
 
-  let pixelHeight = 2
-  let pixelSpace = 1
-  let strokeWidth = .1
+  pixelHeight = 1
+  pixelGap = 1
+  strokeWidth = .9
 
   visualizer.setAttribute('viewBox', `0 0 ${widthResolution} ${height}`)
 
   for(let i=0; i<widthResolution; i++) {
-    path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.setAttribute('stroke-dashoffset', `${pixelHeight/2}`)
-    path.setAttribute('stroke-dasharray', `${pixelHeight},${pixelSpace}`)
-    path.setAttribute('stroke-width', strokeWidth)
-    path.classList.add('topRight')
-    topRightMask.appendChild(path)
+    let topRightPath = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    topRightPath.setAttribute('stroke-dashoffset', -(pixelGap/2))
+    topRightPath.setAttribute('stroke-dasharray', `${pixelHeight},${pixelGap}`)
+    topRightPath.setAttribute('stroke-width', strokeWidth)
+    topRightPath.classList.add('topRight')
+    topRightMask.appendChild(topRightPath)
 
-    path2 = document.createElementNS('http://www.w3.org/2000/svg', 'path')
-    path2.setAttribute('stroke-dashoffset', `${pixelHeight/2}`)
-    path2.setAttribute('stroke-dasharray', `${pixelHeight},${pixelSpace}`)
-    path2.setAttribute('stroke-width', strokeWidth)
-    path2.classList.add('bottomRight')
-    bottomRightMask.appendChild(path2)
+    let bottomRightPath = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    bottomRightPath.setAttribute('stroke-dashoffset', -(pixelGap/2))
+    bottomRightPath.setAttribute('stroke-dasharray', `${pixelHeight},${pixelGap}`)
+    bottomRightPath.setAttribute('stroke-width', strokeWidth)
+    bottomRightPath.classList.add('bottomRight')
+    bottomRightMask.appendChild(bottomRightPath)
 
-    path3 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path3.setAttribute('stroke-dashoffset', `${pixelHeight/2}`)
-    path3.setAttribute('stroke-dasharray', `${pixelHeight},${pixelSpace}`)
-    path3.setAttribute('stroke-width', strokeWidth)
-    path3.classList.add('topLeft')
-    topLeftMask.appendChild(path3)
+    let topLeftPath = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    topLeftPath.setAttribute('stroke-dashoffset', -(pixelGap/2))
+    topLeftPath.setAttribute('stroke-dasharray', `${pixelHeight},${pixelGap}`)
+    topLeftPath.setAttribute('stroke-width', strokeWidth)
+    topLeftPath.classList.add('topLeft')
+    topLeftMask.appendChild(topLeftPath)
 
-    path4 = document.createElementNS('http://www.w3.org/2000/svg', 'path')
-    path4.setAttribute('stroke-dashoffset', `${pixelHeight/2}`)
-    path4.setAttribute('stroke-dasharray', `${pixelHeight},${pixelSpace}`)
-    path4.setAttribute('stroke-width', strokeWidth)
-    path4.classList.add('bottomLeft')
-    bottomLeftMask.appendChild(path4)
+    let bottomLeftPath = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    bottomLeftPath.setAttribute('stroke-dashoffset', -(pixelGap/2))
+    bottomLeftPath.setAttribute('stroke-dasharray', `${pixelHeight},${pixelGap}`)
+    bottomLeftPath.setAttribute('stroke-width', strokeWidth)
+    bottomLeftPath.classList.add('bottomLeft')
+    bottomLeftMask.appendChild(bottomLeftPath)
   }
 
-  let draw = function () {
-    analyser.getByteFrequencyData(frequencyArray)
-
-    let barHeight, newHeight
-
-    for(let i=0; i<widthResolution; i++) {
-      barHeight = Math.floor(frequencyArray[i])
-
-      newHeight = barHeight > pixelHeight ? barHeight : pixelHeight/2
-
-      topRightPaths[i]
-        .setAttribute('d',
-          'M '
-          + (Math.ceil((widthResolution/2) + 0.5)+i)
-          +`,${(height/2) - (0.75/2)} l 0,-`
-          + newHeight)
-
-      bottomRightPaths[i]
-        .setAttribute('d',
-          'M '
-          + (Math.ceil((widthResolution/2) + 0.5)+i)
-          +`,${(height/2) + (0.75/2)} l 0,`
-          + newHeight)
-
-      topLeftPaths[i]
-        .setAttribute('d',
-          'M '
-          + (Math.ceil((widthResolution/2) - 0.5)-i)
-          +`,${(height/2) - (0.75/2)} l 0,-`
-          + newHeight)
-
-      bottomLeftPaths[i]
-        .setAttribute('d',
-          'M '
-          + (Math.ceil((widthResolution/2) - 0.5)-i)
-          +`,${(height/2) + (0.75/2)} l 0,`
-          + newHeight)
-    }
-  }
 
   let animation = setInterval(draw, 1000/60)
 }
 
 function showError(error) {
   console.error(error)
+}
+
+let draw = function () {
+  analyser.getByteFrequencyData(frequencyArray)
+
+  let barHeight, newHeight
+
+  for(let i=0; i<widthResolution; i++) {
+    barHeight = Math.floor(frequencyArray[i])
+
+    newHeight = barHeight > pixelHeight ? (barHeight + pixelGap/2) : pixelHeight*2
+
+    topRightPaths[i]
+      .setAttribute('d',
+        'M '
+        + (Math.ceil((widthResolution/2) + strokeWidth/2)+i) // horizontal translate
+        +`,${Math.ceil((height*100)/2)/100 - (Math.ceil((0.75*100)/2)/100)} l 0,-` // vertical translate + offset
+        + newHeight)
+
+    bottomRightPaths[i]
+      .setAttribute('d',
+        'M '
+        + (Math.ceil((widthResolution/2) + strokeWidth/2)+i)
+        +`,${Math.ceil((height*100)/2)/100 + (Math.ceil((0.75*100)/2)/100)} l 0,`
+        + newHeight)
+
+    topLeftPaths[i]
+      .setAttribute('d',
+        'M '
+        + (Math.ceil((widthResolution/2) - strokeWidth/2)-i)
+        +`,${Math.ceil((height*100)/2)/100 - (Math.ceil((0.75*100)/2)/100)} l 0,-`
+        + newHeight)
+
+    bottomLeftPaths[i]
+      .setAttribute('d',
+        'M '
+        + (Math.ceil((widthResolution/2) - strokeWidth/2)-i)
+        +`,${Math.ceil((height*100)/2)/100 + (Math.ceil((0.75*100)/2)/100)} l 0,`
+        + newHeight)
+  }
 }
 
 navigator.mediaDevices.getUserMedia({ audio: true })
