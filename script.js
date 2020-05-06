@@ -13,71 +13,100 @@ let bottomLeftPaths = bottomLeftMask.getElementsByTagName('path')
 let AudioContext
 let audioContent
 let path
-let seconds = 0
-let loud_volume_threshold = 30
-let colorPercent = 0
 
 function startStream(stream) {
-  permission = true
-
   let audioStream = audioContent.createMediaStreamSource( stream )
   let analyser = audioContent.createAnalyser()
-  let fftSize = 1024
+  let fftSize = 256
 
-  analyser.fftSize = fftSize
+  analyser.fftSize = fftSize // range (guessing) from 0dB to X
   audioStream.connect(analyser)
+
+  // if(widthResolution <= fftSize) { fits() }
+  // at 128, performance matches native browser
+  let widthResolution = 256
+  let height = 512 // 512 because frequencies cap at 255, so 2 bars make ~512(actual 510)
 
   let bufferLength = analyser.frequencyBinCount
   let frequencyArray = new Uint8Array(bufferLength)
 
-  visualizer.setAttribute('viewBox', '0 0 1024 256')
+  let pixelHeight = 2
+  let pixelSpace = 1
+  let strokeWidth = .1
 
-  for(let i=0; i<1024; i++) {
+  visualizer.setAttribute('viewBox', `0 0 ${widthResolution} ${height}`)
+
+  for(let i=0; i<widthResolution; i++) {
     path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.setAttribute('stroke-dasharray', '2,1')
+    path.setAttribute('stroke-dashoffset', `${pixelHeight/2}`)
+    path.setAttribute('stroke-dasharray', `${pixelHeight},${pixelSpace}`)
+    path.setAttribute('stroke-width', strokeWidth)
     path.classList.add('topRight')
     topRightMask.appendChild(path)
-  }
 
-  for(let i=0; i<1024; i++) {
-    path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
-    path.setAttribute('stroke-dasharray', '2,1')
-    path.classList.add('bottomRight')
-    bottomRightMask.appendChild(path)
-  }
-  for(let i=0; i<1024; i++) {
-    path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.setAttribute('stroke-dasharray', '2,1')
-    path.classList.add('topLeft')
-    topLeftMask.appendChild(path)
-  }
+    path2 = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    path2.setAttribute('stroke-dashoffset', `${pixelHeight/2}`)
+    path2.setAttribute('stroke-dasharray', `${pixelHeight},${pixelSpace}`)
+    path2.setAttribute('stroke-width', strokeWidth)
+    path2.classList.add('bottomRight')
+    bottomRightMask.appendChild(path2)
 
-  for(let i=0; i<1024; i++) {
-    path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
-    path.setAttribute('stroke-dasharray', '2,1')
-    path.classList.add('bottomLeft')
-    bottomLeftMask.appendChild(path)
+    path3 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path3.setAttribute('stroke-dashoffset', `${pixelHeight/2}`)
+    path3.setAttribute('stroke-dasharray', `${pixelHeight},${pixelSpace}`)
+    path3.setAttribute('stroke-width', strokeWidth)
+    path3.classList.add('topLeft')
+    topLeftMask.appendChild(path3)
+
+    path4 = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    path4.setAttribute('stroke-dashoffset', `${pixelHeight/2}`)
+    path4.setAttribute('stroke-dasharray', `${pixelHeight},${pixelSpace}`)
+    path4.setAttribute('stroke-width', strokeWidth)
+    path4.classList.add('bottomLeft')
+    bottomLeftMask.appendChild(path4)
   }
 
   let draw = function () {
-    requestAnimationFrame(draw)
     analyser.getByteFrequencyData(frequencyArray)
 
-    let adjustedLength
+    let barHeight, newHeight
 
-    for(let i=0; i<1024; i++) {
-      adjustedLength = (Math.floor(frequencyArray[i]) - (Math.floor(frequencyArray[i]) % 3))/2
-      topRightPaths[i].setAttribute('d', 'M '+ (508+i) +',125 l 0,-' + adjustedLength)
-      bottomRightPaths[i].setAttribute('d', 'M '+ (508+i) +',125 l 0,' + adjustedLength)
-    }
-    for(let i=0; i<1024; i++) {
-      adjustedLength = (Math.floor(frequencyArray[i]) - (Math.floor(frequencyArray[i]) % 3))/2
-      topLeftPaths[i].setAttribute('d', 'M '+ (508-i) +',125 l 0,-' + adjustedLength)
-      bottomLeftPaths[i].setAttribute('d', 'M '+ (508-i) +',125 l 0,' + adjustedLength)
+    for(let i=0; i<widthResolution; i++) {
+      barHeight = Math.floor(frequencyArray[i])
+
+      newHeight = barHeight > pixelHeight ? barHeight : pixelHeight/2
+
+      topRightPaths[i]
+        .setAttribute('d',
+          'M '
+          + (Math.ceil((widthResolution/2) + 0.5)+i)
+          +`,${(height/2) - (0.75/2)} l 0,-`
+          + newHeight)
+
+      bottomRightPaths[i]
+        .setAttribute('d',
+          'M '
+          + (Math.ceil((widthResolution/2) + 0.5)+i)
+          +`,${(height/2) + (0.75/2)} l 0,`
+          + newHeight)
+
+      topLeftPaths[i]
+        .setAttribute('d',
+          'M '
+          + (Math.ceil((widthResolution/2) - 0.5)-i)
+          +`,${(height/2) - (0.75/2)} l 0,-`
+          + newHeight)
+
+      bottomLeftPaths[i]
+        .setAttribute('d',
+          'M '
+          + (Math.ceil((widthResolution/2) - 0.5)-i)
+          +`,${(height/2) + (0.75/2)} l 0,`
+          + newHeight)
     }
   }
 
-  draw()
+  let animation = setInterval(draw, 1000/60)
 }
 
 function showError(error) {
