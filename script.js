@@ -1,5 +1,5 @@
-let audioContext = new(window.AudioContext || window.webkitAudioContext)();
-let analyser = audioContext.createAnalyser();
+let audioContext = new(window.AudioContext || window.webkitAudioContext)()
+let analyser = audioContext.createAnalyser()
 let bufferLength
 let dataArray
 let canvas
@@ -20,16 +20,19 @@ function showError(error) {
 function startStream(stream) {
   audioStream = stream
   updateFftSize(fftSize)
-  // analyser.minDecibels = -50
 
+  canvas = document.getElementById('visualizer')
+  canvasCtx = canvas.getContext('2d')
+  scale = window.devicePixelRatio
+  canvas.style.width = window.innerWidth + 'px'
+  canvas.style.height = window.innerHeight + 'px'
+  canvas.width = Math.floor(window.innerWidth * scale)
+  canvas.height = Math.floor(window.innerHeight * scale)
+  canvasCtx.scale(scale, scale)
+  canvasCtx.canvas.width  = window.innerWidth
+  canvasCtx.canvas.height = window.innerHeight
 
-  // Get a canvas defined with ID "oscilloscope"
-  canvas = document.getElementById("oscilloscope");
-  canvasCtx = canvas.getContext("2d");
-  canvasCtx.canvas.width  = window.innerWidth;
-  canvasCtx.canvas.height = window.innerHeight;
-
-  draw();
+  draw()
 }
 
 function updateFftSize(newSize) {
@@ -40,38 +43,33 @@ function updateFftSize(newSize) {
   sourceNode.connect(analyser)
 }
 
-// draw an oscilloscope of the current audio source
-
 function draw() {
-  requestAnimationFrame(draw);
+  requestAnimationFrame(draw)
 
-  analyser.getFloatFrequencyData(dataArray);
+  analyser.getFloatFrequencyData(dataArray)
   let decay = 0.8 // higher is slower
   analyser.smoothingTimeConstant = decay
 
-  canvasCtx.fillStyle = "rgb(200, 200, 200)";
-  canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+  canvasCtx.fillStyle = 'rgb(200, 200, 200)'
+  canvasCtx.fillRect(0, 0, canvas.width, canvas.height)
 
-  canvasCtx.lineWidth = 2;
-  canvasCtx.strokeStyle = "rgb(0, 0, 0)";
+  canvasCtx.lineWidth = 2
+  canvasCtx.strokeStyle = 'rgb(0, 0, 0)'
 
-  canvasCtx.beginPath();
+  canvasCtx.beginPath()
 
-  let sliceWidth = canvas.width * 1.0 / bufferLength;
-  let x = 0;
+  let sliceWidth = canvas.width * 1.0 / bufferLength
+  let x = 0
 
-  document.getElementById("feedback") ? document.getElementById("feedback").innerText = dataArray[0] : ''
+  document.getElementById('feedback') ? document.getElementById('feedback').innerText = dataArray[0] : ''
   for (let i = 0; i < bufferLength; i++) {
 
     let y = 128 - Math.abs(dataArray[i]) // 128 is oscilloscope 0 (center)
 
-    canvasCtx.fillStyle = 'hsl(' + (x-frame) + ',100%,50%)';
+    canvasCtx.fillStyle = 'hsl(' + (x-frame) + ',100%,50%)'
     canvasCtx.fillRect(x, canvas.height - (y * heightMultiplier), sliceWidth, canvas.height)
 
-    x += sliceWidth;
+    x += sliceWidth
   }
-
-  canvasCtx.lineTo(canvas.width, canvas.height / 2);
-  canvasCtx.stroke();
   frame++
 }
