@@ -6,8 +6,10 @@ let canvas
 let canvasCtx
 let audioStream
 let frame = 0
-let heightMultiplier = 2
-let fftSize = 32
+let heightMultiplier = 10
+let fftSize = 64
+let decay = 0.5 // higher is slower
+let groupWidth = 1.0 // higher groups more frequencies to the same visual bar
 
 navigator.mediaDevices.getUserMedia({ audio: true })
   .then(startStream)
@@ -24,13 +26,13 @@ function startStream(stream) {
   canvas = document.getElementById('visualizer')
   canvasCtx = canvas.getContext('2d')
   scale = window.devicePixelRatio
-  canvas.style.width = window.innerWidth + 'px'
-  canvas.style.height = window.innerHeight + 'px'
-  canvas.width = Math.floor(window.innerWidth * scale)
-  canvas.height = Math.floor(window.innerHeight * scale)
+  canvas.style.width = 1920 + 'px'
+  canvas.style.height = 1080 + 'px'
+  canvas.width = Math.floor(1920 * scale)
+  canvas.height = Math.floor(1080 * scale)
   canvasCtx.scale(scale, scale)
-  canvasCtx.canvas.width  = window.innerWidth
-  canvasCtx.canvas.height = window.innerHeight
+  canvasCtx.canvas.width  = 1920
+  canvasCtx.canvas.height = 1080
 
   draw()
 }
@@ -45,31 +47,33 @@ function updateFftSize(newSize) {
 
 function draw() {
   requestAnimationFrame(draw)
+  canvasCtx.clearRect(0, 0, canvas.width, canvas.height) // clear the canvas every render
 
   analyser.getFloatFrequencyData(dataArray)
-  let decay = 0.8 // higher is slower
   analyser.smoothingTimeConstant = decay
 
-  canvasCtx.fillStyle = 'rgb(200, 200, 200)'
-  canvasCtx.fillRect(0, 0, canvas.width, canvas.height)
-
-  canvasCtx.lineWidth = 2
-  canvasCtx.strokeStyle = 'rgb(0, 0, 0)'
+  canvasCtx.fillStyle = 'rgba(200, 200, 200, 0)'
 
   canvasCtx.beginPath()
 
-  let sliceWidth = canvas.width * 1.0 / bufferLength
+  groupWidth = groupWidth < bufferLength ? groupWidth : bufferLength
+  console.log(bufferLength)
+
+  let barWidth = canvas.width * groupWidth / bufferLength
   let x = 0
 
   document.getElementById('feedback') ? document.getElementById('feedback').innerText = dataArray[0] : ''
+
   for (let i = 0; i < bufferLength; i++) {
 
-    let y = 128 - Math.abs(dataArray[i]) // 128 is oscilloscope 0 (center)
+    let y = canvas.height - ((128 - Math.abs(dataArray[i])) * heightMultiplier) // 128 is oscilloscope 0 (center)
+    if(y < 0) y = 0
 
-    canvasCtx.fillStyle = 'hsl(' + (x-frame) + ',100%,50%)'
-    canvasCtx.fillRect(x, canvas.height - (y * heightMultiplier), sliceWidth, canvas.height)
+    canvasCtx.fillStyle = 'hsl(' + (i*(360/bufferLength)+frame) + ',100%,50%)'
+    canvasCtx.fillRect(x, y, barWidth, canvas.height)
 
-    x += sliceWidth
+    x += barWidth
   }
+
   frame++
 }
