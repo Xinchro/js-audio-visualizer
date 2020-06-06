@@ -1,29 +1,56 @@
+// defaults
+let settings = {
+  "heightMultiplier": 10,
+  "fftSize": 128,
+  "decay": 0.5, // higher is slower
+  "groupWidth": 1.0, // higher groups more frequencies to the same visual bar
+  "barWidth": 0,
+  "focusPoint": false
+}
+
 let audioContext = new(window.AudioContext || window.webkitAudioContext)()
 let analyser = audioContext.createAnalyser()
-let bufferLength
-let dataArray
 let canvas
 let canvasCtx
+let bufferLength
+let dataArray
 let audioStream
 let frame = 0
-let heightMultiplier = 10
-let fftSize = 128
-let decay = 0.5 // higher is slower
-let groupWidth = 1.0 // higher groups more frequencies to the same visual bar
-let barWidth
-let focusPoint = false
 
 navigator.mediaDevices.getUserMedia({ audio: true })
-  .then(startStream)
+  .then((media) => fetchSettings(media))
+  .then(({ media, fetchedSettings }) => startStream(media, fetchedSettings))
   .catch(showError)
+
+
+function fetchSettings(media) {
+  var request = new XMLHttpRequest()
+  request.open('GET', `./settings.json?t=${new Date()}`, false)
+  request.send(null)
+
+  if(request.status === 200) {
+    return { media, "fetchedSettings": JSON.parse(request.response) }
+  } else {
+    return { media, "fetchedSettings": {} }
+  }
+}
+
+function loadSettings(fetchedSettings) {
+  settings = {
+    ...settings,
+    ...fetchedSettings
+  }
+}
 
 function showError(error) {
   console.error(error)
 }
 
-function startStream(stream) {
+function startStream(stream, fetchedSettings) {
+  loadSettings(fetchedSettings)
+
   audioStream = stream
-  setFftSize(fftSize)
+  setFftSize(settings.fftSize)
 
   canvas = document.getElementById('visualizer')
   canvasCtx = canvas.getContext('2d')
@@ -52,13 +79,13 @@ function draw() {
   canvasCtx.clearRect(0, 0, canvas.width, canvas.height) // clear the canvas every render
 
   analyser.getFloatFrequencyData(dataArray)
-  analyser.smoothingTimeConstant = decay
+  analyser.smoothingTimeConstant = settings.decay
 
   canvasCtx.fillStyle = 'rgba(200, 200, 200, 0)'
 
   canvasCtx.beginPath()
 
-  groupWidth = groupWidth < bufferLength ? groupWidth : bufferLength
+  settings.groupWidth = settings.groupWidth < bufferLength ? settings.groupWidth : bufferLength
 
   // drawSingleVariant()
   // drawQuadVariant()
@@ -73,7 +100,7 @@ function diskMirrorVariant() {
   let circumference = Math.PI * radius
   let totalDisc = Math.PI
   let maxBarHeight = (canvas.height - (radius*2))/2
-  let normalized = true
+  let normalized = false
 
   let angleOffset = (totalDisc * 1 / bufferLength)/2
 
@@ -99,12 +126,12 @@ function diskMirrorVariant() {
     let posx = Math.cos(angle)
     let posy = Math.sin(angle)
 
-    y1 = canvas.height - ((volume) * heightMultiplier)/2 // 128 is oscilloscope 0 (center)
+    y1 = canvas.height - ((volume) * settings.heightMultiplier)/2 // 128 is oscilloscope 0 (center)
 
     x1 = canvas.width/2 + posx * radius
     y1 = canvas.height/2 + posy * radius
     x2 = segmentLength
-    y2 = ((volume) * heightMultiplier)/2
+    y2 = ((volume) * settings.heightMultiplier)/2
 
     tx1 = canvas.width/4 + Math.cos(i) * radius
     ty1 = canvas.height/4 + Math.sin(i) * radius
@@ -125,7 +152,7 @@ function diskMirrorVariant() {
     canvasCtx.setTransform(1, 0, 0, 1, 0, 0) // reset matrix
 
     // left
-    if(focusPoint) {
+    if(settings.focusPoint) {
       canvasCtx.fillStyle = 'hsla(' + (i*(180/bufferLength)+frame) + ',100%,50%,50%)'
     } else {
       canvasCtx.fillStyle = 'hsla(' + (frame-i*(180/bufferLength)) + ',100%,50%,50%)'
@@ -166,12 +193,12 @@ function diskVariant() {
     let posx = Math.cos(angle)
     let posy = Math.sin(angle)
 
-    y1 = canvas.height - ((volume) * heightMultiplier)/2 // 128 is oscilloscope 0 (center)
+    y1 = canvas.height - ((volume) * settings.heightMultiplier)/2 // 128 is oscilloscope 0 (center)
 
     x1 = canvas.width/2 + posx * radius
     y1 = canvas.height/2 + posy * radius
     x2 = segmentLength
-    y2 = ((volume) * heightMultiplier)/2
+    y2 = ((volume) * settings.heightMultiplier)/2
 
     tx1 = canvas.width/4 + Math.cos(i) * radius
     ty1 = canvas.height/4 + Math.sin(i) * radius
@@ -193,7 +220,7 @@ function diskVariant() {
 }
 
 function drawQuadVariant() {
-  barWidth = canvas.width * groupWidth / bufferLength
+  settings.barWidth = canvas.width * settings.groupWidth / bufferLength
   let xOffset = 0
 
   for (let i = 0; i < bufferLength; i++) {
@@ -205,12 +232,12 @@ function drawQuadVariant() {
 
     volume = 128 - Math.abs(dataArray[i])
 
-    y1 = canvas.height - ((volume) * heightMultiplier)/2 // 128 is oscilloscope 0 (center)
+    y1 = canvas.height - ((volume) * settings.heightMultiplier)/2 // 128 is oscilloscope 0 (center)
     // if(y2 <= 0) y1 = 0
 
     x1 = x1+canvas.width/2
     y1 = y1/2
-    x2 = barWidth/2
+    x2 = settings.barWidth/2
     y2 = (canvas.height/2 - y1)*2
 
     if(y2 <= 0) {
@@ -223,7 +250,7 @@ function drawQuadVariant() {
     canvasCtx.fillRect(x1+xOffset, y1, x2, y2) // top right
 
     //left side
-    if(focusPoint) {
+    if(settings.focusPoint) {
       canvasCtx.fillStyle = 'hsla(' + (i*(360/bufferLength)+frame) + ',100%,50%,50%)'
     } else {
       canvasCtx.fillStyle = 'hsla(' + (frame-i*(360/bufferLength)) + ',100%,50%,50%)'
@@ -231,21 +258,21 @@ function drawQuadVariant() {
     // don't render first bar on the left, to not overlap with right
     if(i!=0) canvasCtx.fillRect(x1-xOffset, y1, x2, y2) // top left
 
-    xOffset += barWidth/2
+    xOffset += settings.barWidth/2
   }
 }
 
 function drawSingleVariant() {
-  barWidth = canvas.width * groupWidth / bufferLength
+  settings.barWidth = canvas.width * settings.groupWidth / bufferLength
   let x = 0
   for (let i = 0; i < bufferLength; i++) {
 
-    let y = canvas.height - ((128 - Math.abs(dataArray[i])) * heightMultiplier) // 128 is oscilloscope 0 (center)
+    let y = canvas.height - ((128 - Math.abs(dataArray[i])) * settings.heightMultiplier) // 128 is oscilloscope 0 (center)
     if(y < 0) y = 0
 
     canvasCtx.fillStyle = 'hsl(' + (i*(360/bufferLength)+frame) + ',100%,50%)'
-    canvasCtx.fillRect(x, y, barWidth, canvas.height)
+    canvasCtx.fillRect(x, y, settings.barWidth, canvas.height)
 
-    x += barWidth
+    x += settings.barWidth
   }
 }

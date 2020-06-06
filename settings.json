@@ -1,0 +1,9 @@
+{
+  "focusPoint": false,
+  "heightMultiplier": 10,
+  "fftSize": 128,
+  "decay": 0.5,
+  "groupWidth": 1.0,
+  "barWidth": 0,
+  "focusPoint": false
+}
