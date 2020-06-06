@@ -11,6 +11,7 @@ let fftSize = 128
 let decay = 0.5 // higher is slower
 let groupWidth = 1.0 // higher groups more frequencies to the same visual bar
 let barWidth
+let focusPoint = false
 
 navigator.mediaDevices.getUserMedia({ audio: true })
   .then(startStream)
@@ -115,14 +116,20 @@ function diskMirrorVariant() {
       y2 = maxBarHeight
     }
 
-    canvasCtx.fillStyle = 'hsla(' + (i*(360/bufferLength)+frame) + ',100%,50%,50%)'
 
     // right
+    canvasCtx.fillStyle = 'hsla(' + (i*(180/bufferLength)+frame) + ',100%,50%,50%)'
     canvasCtx.translate(canvas.width/2 , canvas.height/2 )
     canvasCtx.rotate(angleOffset + angle - Math.PI)
     canvasCtx.fillRect(-x2/2, radius, x2, y2)
     canvasCtx.setTransform(1, 0, 0, 1, 0, 0) // reset matrix
+
     // left
+    if(focusPoint) {
+      canvasCtx.fillStyle = 'hsla(' + (i*(180/bufferLength)+frame) + ',100%,50%,50%)'
+    } else {
+      canvasCtx.fillStyle = 'hsla(' + (frame-i*(180/bufferLength)) + ',100%,50%,50%)'
+    }
     canvasCtx.translate(canvas.width/2 , canvas.height/2 )
     canvasCtx.rotate(-angleOffset - angle - Math.PI)
     canvasCtx.fillRect(-x2/2, radius, x2, y2)
@@ -186,7 +193,6 @@ function diskVariant() {
 }
 
 function drawQuadVariant() {
-  let focusPoint = false
   barWidth = canvas.width * groupWidth / bufferLength
   let xOffset = 0
 
