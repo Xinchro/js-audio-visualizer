@@ -62,23 +62,32 @@ function draw() {
 
   // drawSingleVariant()
   // drawQuadVariant()
-  circleVarient()
+  diskVariant()
 
   frame++
 }
 
-function circleVarient() {
+function diskVariant() {
   let radius = 100
   let circumference = 2 * Math.PI * radius
   let totalDisc = 2 * Math.PI
   let maxBarHeight = (canvas.height - (radius*2))/2
+  let normalized = false
+
+  let reducer = (accumulator, currentValue) => accumulator + currentValue
+  dataArraySum = dataArray.reduce(reducer)
+  dataArrayNormalised = dataArray.map((freq) => {
+    return freq/dataArraySum*100
+  })
 
   for (let i = 0; i < bufferLength; i++) {
     let x1 = 0
     let y1 = 0
     let x2 = 0
     let y2 = 0
-    let volume = 128 - Math.abs(dataArray[i])
+    let volume = normalized ?
+      (128 - Math.abs(dataArray[i]))*dataArrayNormalised[i]
+      : 128 - Math.abs(dataArray[i])
     let percentage = i / bufferLength
     let angle = totalDisc * percentage
 
@@ -97,10 +106,10 @@ function circleVarient() {
     tx1 = canvas.width/4 + Math.cos(i) * radius
     ty1 = canvas.height/4 + Math.sin(i) * radius
 
-    if(y2 <= segmentLength) {
+    if(y2 <= segmentLength) { //min size
       y2 = segmentLength
     }
-    if(y2 >= maxBarHeight) {
+    if(y2 >= maxBarHeight) { //max size
       y2 = maxBarHeight
     }
 
@@ -109,6 +118,7 @@ function circleVarient() {
     canvasCtx.rotate(angle - Math.PI)
     canvasCtx.fillRect(0, radius, x2, y2)
     canvasCtx.setTransform(1, 0, 0, 1, 0, 0)
+
   }
 }
 
