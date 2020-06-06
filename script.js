@@ -242,11 +242,9 @@ function drawQuadVariant() {
       (128 - Math.abs(dataArray[i]))*dataArrayNormalized[i]
       : 128 - Math.abs(dataArray[i])
 
-    y1 = canvas.height - ((volume) * settings.heightMultiplier)/2 // 128 is oscilloscope 0 (center)
-    // if(y2 <= 0) y1 = 0
 
     x1 = x1+canvas.width/2
-    y1 = y1/2
+    y1 = canvas.height/2 - ((volume) * settings.heightMultiplier)/2
     x2 = settings.barWidth/2
     y2 = (canvas.height/2 - y1)*2
 
