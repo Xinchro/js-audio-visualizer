@@ -87,12 +87,26 @@ function draw() {
 
   settings.groupWidth = settings.groupWidth < bufferLength ? settings.groupWidth : bufferLength
 
-  // drawSingleVariant()
-  // drawQuadVariant()
-  // diskVariant()
-  diskMirrorVariant()
+  pickVariant()
 
   frame++
+}
+
+function pickVariant() {
+  switch(settings.variant) {
+    case "barQuad":
+      drawQuadVariant()
+      break
+    case "disc":
+      diskVariant()
+      break
+    case "discMirror":
+      diskMirrorVariant()
+      break
+    case "bar":
+    default:
+      drawSingleVariant()
+  }
 }
 
 function diskMirrorVariant() {

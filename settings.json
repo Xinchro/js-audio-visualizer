@@ -1,4 +1,5 @@
 {
+  "variant": "barQuad",
   "focusPoint": false,
   "heightMultiplier": 10,
   "fftSize": 128,
