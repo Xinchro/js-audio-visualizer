@@ -1,20 +1,23 @@
 // defaults
 let settings = {
+  "variant": "bar",
   "heightMultiplier": 10,
   "fftSize": 128,
   "decay": 0.5, // higher is slower
   "groupWidth": 1.0, // higher groups more frequencies to the same visual bar
   "barWidth": 0,
-  "focusPoint": false
+  "focusPoint": false,
+  "normalized": false
 }
 
 let audioContext = new(window.AudioContext || window.webkitAudioContext)()
 let analyser = audioContext.createAnalyser()
+let audioStream
+let bufferLength
 let canvas
 let canvasCtx
-let bufferLength
 let dataArray
-let audioStream
+let dataArrayNormalized
 let frame = 0
 
 navigator.mediaDevices.getUserMedia({ audio: true })
@@ -81,6 +84,12 @@ function draw() {
   analyser.getFloatFrequencyData(dataArray)
   analyser.smoothingTimeConstant = settings.decay
 
+  let reducer = (accumulator, currentValue) => accumulator + currentValue
+  dataArraySum = dataArray.reduce(reducer)
+  dataArrayNormalized = dataArray.map((freq) => {
+    return freq/dataArraySum*100
+  })
+
   canvasCtx.fillStyle = 'rgba(200, 200, 200, 0)'
 
   canvasCtx.beginPath()
@@ -114,23 +123,16 @@ function diskMirrorVariant() {
   let circumference = Math.PI * radius
   let totalDisc = Math.PI
   let maxBarHeight = (canvas.height - (radius*2))/2
-  let normalized = false
 
   let angleOffset = (totalDisc * 1 / bufferLength)/2
-
-  let reducer = (accumulator, currentValue) => accumulator + currentValue
-  dataArraySum = dataArray.reduce(reducer)
-  dataArrayNormalised = dataArray.map((freq) => {
-    return freq/dataArraySum*100
-  })
 
   for (let i = 0; i < bufferLength; i++) {
     let x1 = 0
     let y1 = 0
     let x2 = 0
     let y2 = 0
-    let volume = normalized ?
-      (128 - Math.abs(dataArray[i]))*dataArrayNormalised[i]
+    let volume = settings.normalized ?
+      (128 - Math.abs(dataArray[i]))*dataArrayNormalized[i]
       : 128 - Math.abs(dataArray[i])
     let percentage = i / bufferLength
     let angle = totalDisc * percentage
@@ -185,19 +187,13 @@ function diskVariant() {
   let maxBarHeight = (canvas.height - (radius*2))/2
   let normalized = false
 
-  let reducer = (accumulator, currentValue) => accumulator + currentValue
-  dataArraySum = dataArray.reduce(reducer)
-  dataArrayNormalised = dataArray.map((freq) => {
-    return freq/dataArraySum*100
-  })
-
   for (let i = 0; i < bufferLength; i++) {
     let x1 = 0
     let y1 = 0
     let x2 = 0
     let y2 = 0
-    let volume = normalized ?
-      (128 - Math.abs(dataArray[i]))*dataArrayNormalised[i]
+    let volume = settings.normalized ?
+      (128 - Math.abs(dataArray[i]))*dataArrayNormalized[i]
       : 128 - Math.abs(dataArray[i])
     let percentage = i / bufferLength
     let angle = totalDisc * percentage
@@ -242,9 +238,9 @@ function drawQuadVariant() {
     let y1 = 0
     let x2 = 0
     let y2 = 0
-    let volume = 0
-
-    volume = 128 - Math.abs(dataArray[i])
+    let volume = settings.normalized ?
+      (128 - Math.abs(dataArray[i]))*dataArrayNormalized[i]
+      : 128 - Math.abs(dataArray[i])
 
     y1 = canvas.height - ((volume) * settings.heightMultiplier)/2 // 128 is oscilloscope 0 (center)
     // if(y2 <= 0) y1 = 0

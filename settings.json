@@ -1,6 +1,7 @@
 {
   "variant": "barQuad",
   "focusPoint": false,
+  "normalized": false,
   "heightMultiplier": 10,
   "fftSize": 128,
   "decay": 0.5,
