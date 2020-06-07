@@ -22,20 +22,22 @@ let frame = 0
 
 navigator.mediaDevices.getUserMedia({ audio: true })
   .then((media) => fetchSettings(media))
-  .then(({ media, fetchedSettings }) => startStream(media, fetchedSettings))
+  // .then(({ media, fetchedSettings }) => startStream(media, fetchedSettings))
   .catch(showError)
 
 
 function fetchSettings(media) {
   var request = new XMLHttpRequest()
-  request.open('GET', `./settings.json?t=${new Date()}`, false)
+
+  request.onreadystatechange = function() {
+    if(request.readyState == XMLHttpRequest.DONE) {
+      startStream(media, JSON.parse(request.responseText))
+    }
+  }
+
+  request.open('GET', `./settings.json?t=${new Date()}`, true)
   request.send(null)
 
-  if(request.status === 200) {
-    return { media, "fetchedSettings": JSON.parse(request.response) }
-  } else {
-    return { media, "fetchedSettings": {} }
-  }
 }
 
 function loadSettings(fetchedSettings) {
