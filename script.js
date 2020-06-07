@@ -103,6 +103,9 @@ function draw() {
 
 function pickVariant() {
   switch(settings.variant) {
+    case "vertParticles":
+      verticalParticles()
+      break
     case "barQuad":
       drawQuadVariant()
       break
@@ -115,6 +118,73 @@ function pickVariant() {
     case "bar":
     default:
       drawSingleVariant()
+  }
+}
+
+let particleWaves = []
+function verticalParticles() {
+  settings.barWidth = canvas.width * settings.groupWidth / bufferLength
+  let x = settings.barWidth/2
+
+  for (let i = 0; i < bufferLength; i++) {
+    let y = canvas.height - ((128 - Math.abs(dataArray[i])) * settings.heightMultiplier) // 128 is oscilloscope 0 (center)
+
+    if(!particleWaves[i]) {
+      particleWaves[i] = {
+        start: canvas.height,
+        end: y,
+        current: canvas.height,
+        peaked: false,
+        ready: true
+      }
+    }
+
+    particleWaves[i].end = y
+    let increment = 10
+
+    if(particleWaves[i].peaked) {
+      particleWaves[i].current += increment
+    } else {
+      particleWaves[i].current -= increment
+    }
+
+    if(particleWaves[i].current - increment < particleWaves[i].end) {
+      particleWaves[i].peaked = true
+      particleWaves[i].current = y
+    }
+
+    if(particleWaves[i].current + increment > particleWaves[i].start) {
+      particleWaves[i].ready = true
+    }
+
+    if(particleWaves[i].ready) {
+      particleWaves[i].start = canvas.height
+      particleWaves[i].end = y > 0 && y < canvas.height ? y : canvas.height
+      particleWaves[i].current = canvas.height
+      particleWaves[i].ready = false
+      particleWaves[i].peaked = false
+    }
+
+    canvasCtx.fillStyle = 'hsl(' + (frame+360*(particleWaves[i].current/1080)) + ',100%,50%)'
+    canvasCtx.beginPath()
+    canvasCtx.arc(x, canvas.height-(canvas.height-particleWaves[i].current), settings.barWidth/2, 0, Math.PI*2, false)
+    canvasCtx.closePath()
+    canvasCtx.fill()
+    canvasCtx.font = "12px Arial"
+    canvasCtx.fillText(Math.floor(particleWaves[i].start), x,25)
+    canvasCtx.fillText(Math.floor(particleWaves[i].end), x,50)
+    canvasCtx.fillText(Math.floor(particleWaves[i].current), x,75)
+    canvasCtx.fillText(Math.floor(particleWaves[i].ready), x,100)
+    canvasCtx.fillText(Math.floor(particleWaves[i].peaked), x,125)
+
+    canvasCtx.fillStyle = 'rgba(125,125,125,1)'
+    canvasCtx.beginPath()
+    canvasCtx.arc(x, y, settings.barWidth/2, 0, Math.PI*2, false)
+    canvasCtx.closePath()
+    canvasCtx.fill()
+    canvasCtx.setTransform(1, 0, 0, 1, 0, 0) // reset matrix
+
+    x += settings.barWidth
   }
 }
 
