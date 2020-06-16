@@ -7,7 +7,8 @@ let settings = {
   "groupWidth": 1.0, // higher groups more frequencies to the same visual bar
   "barWidth": 0,
   "focusPoint": false,
-  "normalized": false
+  "normalized": false,
+  "maxDiscRadius": 150,
 }
 
 let audioContext = new(window.AudioContext || window.webkitAudioContext)()
@@ -22,7 +23,6 @@ let frame = 0
 
 navigator.mediaDevices.getUserMedia({ audio: true })
   .then((media) => fetchSettings(media))
-  // .then(({ media, fetchedSettings }) => startStream(media, fetchedSettings))
   .catch(showError)
 
 
@@ -94,8 +94,6 @@ function draw() {
 
   canvasCtx.fillStyle = 'rgba(200, 200, 200, 0)'
 
-  canvasCtx.beginPath()
-
   settings.groupWidth = settings.groupWidth < bufferLength ? settings.groupWidth : bufferLength
 
   pickVariant()
@@ -117,9 +115,47 @@ function pickVariant() {
     case "discMirror":
       diskMirrorVariant()
       break
+    case "discCircle":
+      discCircle()
+      break
     case "bar":
     default:
       drawSingleVariant()
+  }
+}
+
+function discCircle() {
+  let radius = canvas.height / 2 - settings.maxDiscRadius
+  let circumference = 2 * Math.PI * radius
+  let totalDisc = 2 * Math.PI
+  let normalized = false
+
+  for (let i = 0; i < bufferLength; i++) {
+    let volume = settings.normalized ?
+      (128 - Math.abs(dataArray[i])) * dataArrayNormalized[i]
+      : 128 - Math.abs(dataArray[i])
+    let percentage = i / bufferLength
+    let angle = totalDisc * percentage
+
+    let segmentLength = circumference/bufferLength/2
+
+    discRadius = ((volume) * settings.heightMultiplier)
+
+    if(discRadius <= segmentLength) { //min size
+      discRadius = segmentLength
+    }
+    if(discRadius >= settings.maxDiscRadius) { //max size
+      discRadius = settings.maxDiscRadius
+    }
+
+    canvasCtx.fillStyle = 'hsla(' + (i*(360/bufferLength)+frame) + ',100%,50%,50%)'
+    canvasCtx.translate(canvas.width/2, canvas.height/2)
+    canvasCtx.rotate(angle - Math.PI)
+    canvasCtx.beginPath()
+    canvasCtx.arc(0, radius, discRadius, 0, Math.PI*2, false)
+    canvasCtx.closePath()
+    canvasCtx.fill()
+    canvasCtx.setTransform(1, 0, 0, 1, 0, 0)
   }
 }
 
@@ -173,11 +209,11 @@ function verticalParticles() {
     canvasCtx.closePath()
     canvasCtx.fill()
     canvasCtx.font = "12px Arial"
-    canvasCtx.fillText(Math.floor(particleWaves[i].start), x,25)
-    canvasCtx.fillText(Math.floor(particleWaves[i].end), x,50)
-    canvasCtx.fillText(Math.floor(particleWaves[i].current), x,75)
-    canvasCtx.fillText(Math.floor(particleWaves[i].ready), x,100)
-    canvasCtx.fillText(Math.floor(particleWaves[i].peaked), x,125)
+    canvasCtx.fillText(Math.floor(particleWaves[i].start), x, 25)
+    canvasCtx.fillText(Math.floor(particleWaves[i].end), x, 50)
+    canvasCtx.fillText(Math.floor(particleWaves[i].current), x, 75)
+    canvasCtx.fillText(Math.floor(particleWaves[i].ready), x, 100)
+    canvasCtx.fillText(Math.floor(particleWaves[i].peaked), x, 125)
 
     canvasCtx.fillStyle = 'rgba(125,125,125,1)'
     canvasCtx.beginPath()

@@ -1,11 +1,10 @@
 {
-  "variant": "vertParticles",
-  "focusPoint": false,
+  "variant": "discCircle",
+  "focusPoint": true,
   "normalized": false,
-  "heightMultiplier": 10,
+  "heightMultiplier": 1,
   "fftSize": 128,
-  "decay": 0.5,
+  "decay": 0.75,
   "groupWidth": 1.0,
-  "barWidth": 0,
-  "focusPoint": false
+  "barWidth": 0
 }
